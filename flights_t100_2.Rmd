@@ -27,6 +27,15 @@ library(reshape2)
 OnTime_2019_1 <- read_csv("C:/Users/Glarange/Google Drive/Data_Inc/Project/OnTime_2019_1.csv", 
                           col_types = cols(FlightDate = col_date(format = "%m/%d/%Y")))
 
+delays <- OnTime_2019_1 %>% 
+  group_by(Operating_Airline) %>% 
+  summarise(
+    count = n(),
+    delayed = sum(DepDel15, na.rm = TRUE),
+    ndelay = count - delayed,
+    proportion = delayed/count) %>%
+    filter(count>15000)
+
 cause_delays <- OnTime_2019_1 %>% 
   group_by(Operating_Airline) %>% 
   summarise(
@@ -39,6 +48,25 @@ cause_delays <- OnTime_2019_1 %>%
     filter(count>15000)
 
 
+# Need to melt (stack) df for ggplots
+
+delayed<-delays$delayed
+ndelay <- delays$ndelay
+opAir <- delays$Operating_Airline
+df1 <- data.frame(delayed,ndelay,opAir)
+df2 <- melt(df1,id.vars="opAir")
+
+ggplot(df2, aes(x=opAir, y=value, fill=variable)) +
+  geom_bar(stat='identity', position='stack') +
+  labs(x="Operating Airline", y="Count") +
+  ggtitle("Flight Delays per Operating Airline, January 2019")
+
+```
+
+
+
+```{r}
+
 Carrier_Delay<-cause_delays$Carrier_Delay
 Weather <- cause_delays$Weather_Delay
 NAS <- cause_delays$NAS_Delay
@@ -49,12 +77,13 @@ opAir <- cause_delays$Operating_Airline
 df1 <- data.frame(Carrier_Delay,Weather,NAS,Security,Late_Aircraft,opAir)
 df2 <- melt(df1,id.vars="opAir")
 
-```
+delayed<-delays$delayed
+ndelay <- delays$ndelay
+opAir <- delays$Operating_Airline
+DF1 <- data.frame(delayed,ndelay,opAir)
+DF2 <- melt(df1,id.vars="opAir")
 
-
-
-```{r}
-ggplot(df2, aes(x=opAir, y=value, fill=variable)) +
+ggplot(DF2, aes(x=opAir, y=value, fill=variable)) +
   geom_bar(stat='identity', position='stack') +
   labs(x="Operating Airline", y="Count")+
   ggtitle("Causes of Flight Delays per Operating Airline - US DOT BTS, January 2019")
