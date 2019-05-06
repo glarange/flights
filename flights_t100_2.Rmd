@@ -1,0 +1,63 @@
+---
+title: "Flights, Data Incubator Challenge Submission"
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+author: "Gui Larangeira"
+date: "May 5, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r  include=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+
+```
+
+```{r}
+OnTime_2019_1 <- read_csv("C:/Users/Glarange/Google Drive/Data_Inc/Project/OnTime_2019_1.csv", 
+                          col_types = cols(FlightDate = col_date(format = "%m/%d/%Y")))
+
+cause_delays <- OnTime_2019_1 %>% 
+  group_by(Operating_Airline) %>% 
+  summarise(
+    count = n(),
+    Carrier_Delay = sum(CarrierDelay, na.rm = TRUE),
+    Weather_Delay = sum(WeatherDelay, na.rm = TRUE),
+    NAS_Delay = sum(NASDelay, na.rm = TRUE),
+    Security_Delay = sum(SecurityDelay, na.rm = TRUE),
+    LateAircraft_Delay = sum(LateAircraftDelay, na.rm = TRUE)) %>%
+    filter(count>15000)
+
+
+Carrier_Delay<-cause_delays$Carrier_Delay
+Weather <- cause_delays$Weather_Delay
+NAS <- cause_delays$NAS_Delay
+Security <- cause_delays$Security_Delay
+Late_Aircraft <- cause_delays$LateAircraft_Delay
+
+opAir <- cause_delays$Operating_Airline
+df1 <- data.frame(Carrier_Delay,Weather,NAS,Security,Late_Aircraft,opAir)
+df2 <- melt(df1,id.vars="opAir")
+
+```
+
+
+
+```{r}
+ggplot(df2, aes(x=opAir, y=value, fill=variable)) +
+  geom_bar(stat='identity', position='stack') +
+  labs(x="Operating Airline", y="Count")+
+  ggtitle("Causes of Flight Delays per Operating Airline - US DOT BTS, January 2019")
+```
+
+
